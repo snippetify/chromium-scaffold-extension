@@ -4,4 +4,5 @@ chrome.runtime.onInstalled.addListener(function () {
         title: 'Save snippet',
         contexts: ['selection']
     })
+    console.log('Chrome loaded')
 })
