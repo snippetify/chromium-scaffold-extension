@@ -1,3 +1,8 @@
+/**
+ * Gulp default configuration for chrome extension.
+ * @license MIT
+ * @author Evens Pierre <pierre.evens16@gmail.com>
+ */
 const zip = require('gulp-zip')
 const sass = require('gulp-sass')
 const cache = require('gulp-cache')
@@ -110,6 +115,10 @@ function zipFiles () {
         .pipe(dest('./'))
 }
 
+function removeZip () {
+    return src('snippetify.zip', { read: false, allowEmpty: true }).pipe(clean())
+}
+
 function cleanTmp () {
     return src('tmp', { read: false, allowEmpty: true }).pipe(clean())
 }
@@ -127,7 +136,7 @@ function watchFiles (cb) {
     cb() // Async completion
 }
 
-exports.clean = parallel(cleanDist, cleanTmp)
+exports.clean = parallel(cleanDist, cleanTmp, removeZip)
 exports.watch = watchFiles
 exports.default = series(
     cleanDist,
