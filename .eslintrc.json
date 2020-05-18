@@ -7,8 +7,12 @@
         "standard"
     ],
     "globals": {
+        "$": "readonly",
+        "Vue": "readonly",
         "chrome": "readonly",
         "Atomics": "readonly",
+        "SimpleMDE": "readonly",
+        "CodeMirror": "readonly",
         "SharedArrayBuffer": "readonly"
     },
     "parserOptions": {
@@ -17,5 +21,6 @@
     },
     "rules": {
         "indent": ["error", 4]
-    }
+    },
+    "parser": "babel-eslint"
 }

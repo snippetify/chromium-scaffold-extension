@@ -8,7 +8,7 @@
         "description": ""
     },
     "tooltip": {
-        "message": "Snippetify",
+        "message": "Save snippets to Snippetify",
         "description": ""
     },
     "commandsSaveSnippet": {

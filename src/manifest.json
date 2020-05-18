@@ -26,18 +26,29 @@
         "open_in_tab": false,
         "chrome_style": true
     },
-    "content_scripts": [
-        {
-          "matches": [
+    "content_scripts": [{
+        "matches": [
             "http://*/*",
             "https://*/*"
-          ],
-          "css": ["css/contentscripts.min.css"],
-          "js": ["js/contentscripts.min.js"],
-          "run_at": "document_idle",
-          "all_frames": false
-        }
-    ],
+        ],
+        "exclude_matches": ["https://snippetify.com/*"],
+        "css": [
+            "vendor/css/codemirror.css",
+            "vendor/css/bootstrap.min.css",
+            "vendor/css/simplemde.min.css",
+            "css/contentscripts.min.css"
+        ],
+        "js": [
+            "vendor/js/vue.min.js",
+            "vendor/js/jquery.min.js",
+            "vendor/js/codemirror.js",
+            "vendor/js/bootstrap.min.js",
+            "vendor/js/simplemde.min.js",
+            "js/contentscripts.min.js"
+        ],
+        "run_at": "document_idle",
+        "all_frames": false
+    }],
     "commands": {
         "save-snippet": {
             "suggested_key": {
@@ -62,16 +73,17 @@
         "tabs",
         "storage",
         "cookies",
-        "debugger",
         "activeTab",
         "background",
         "http://*/*",
         "https://*/*",
         "contextMenus",
-        "clipboardRead",
-        "clipboardWrite",
-        "contentSettings",
         "*://*.google.com/",
-        "declarativeContent"
+        "https://snippetify.com/",
+        "https://api.snippetify.com/"
+    ],
+    "web_accessible_resources": [
+        "img/*.png",
+        "page_modal.html"
     ]
 }

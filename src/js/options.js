@@ -1,5 +1,5 @@
-import $ from 'jquery'
+// import $ from 'jquery'
 
-$('#save').on('click', (e) => {
-    alert(1)
-})
+// $('#save').on('click', (e) => {
+//     alert(1)
+// })

@@ -8,7 +8,6 @@ const sass = require('gulp-sass')
 const cache = require('gulp-cache')
 const babel = require('gulp-babel')
 const clean = require('gulp-clean')
-const concat = require('gulp-concat')
 const eslint = require('gulp-eslint')
 const rename = require('gulp-rename')
 const uglify = require('gulp-uglify')
@@ -16,7 +15,10 @@ const minify = require('gulp-minifier')
 const imagemin = require('gulp-imagemin')
 const cleanCSS = require('gulp-clean-css')
 const jsonmin = require('gulp-json-minify')
+const rollup = require('gulp-better-rollup')
 const sourcemaps = require('gulp-sourcemaps')
+const commonjs = require('@rollup/plugin-commonjs')
+const resolve = require('@rollup/plugin-node-resolve')
 const { src, dest, watch, series, parallel } = require('gulp')
 
 function cssTranspile () {
@@ -34,10 +36,53 @@ function cssMinify () {
         .pipe(dest('dist/css'))
 }
 
+function cssVendor () {
+    return src([
+        'node_modules/codemirror/lib/codemirror.css',
+        'node_modules/simplemde/dist/simplemde.min.css',
+        'node_modules/bootstrap/dist/css/bootstrap.min.css',
+        'node_modules/@fortawesome/fontawesome-free/css/all.min.css'
+    ])
+        .pipe(dest('dist/vendor/css'))
+}
+
+function fontVendor () {
+    return src([
+        'node_modules/@fortawesome/fontawesome-free/webfonts/*'
+    ])
+        .pipe(dest('dist/vendor/webfonts'))
+}
+
 function jsTranspile () {
     return src('src/js/**/*.js')
+        .pipe(sourcemaps.init())
         .pipe(babel({ presets: ['@babel/env'] }))
+        .pipe(sourcemaps.write())
         .pipe(dest('tmp/js'))
+}
+
+function jsRollup () {
+    return src('tmp/js/**/*.js')
+        .pipe(rollup({ plugins: [resolve(), commonjs()] }, 'umd'))
+        .pipe(dest('tmp/js'))
+}
+
+function jsMinify () {
+    return src('tmp/js/*.js')
+        .pipe(rename({ suffix: '.min' }))
+        // .pipe(uglify())
+        .pipe(dest('dist/js'))
+}
+
+function jsVendor () {
+    return src([
+        'node_modules/vue/dist/vue.min.js',
+        'node_modules/jquery/dist/jquery.min.js',
+        'node_modules/codemirror/lib/codemirror.js',
+        'node_modules/simplemde/dist/simplemde.min.js',
+        'node_modules/bootstrap/dist/js/bootstrap.min.js'
+    ])
+        .pipe(dest('dist/vendor/js'))
 }
 
 function htmlMinify () {
@@ -71,31 +116,6 @@ function jsonMinify () {
         .pipe(dest('dist'))
 }
 
-function jsMinifyOthers () {
-    return src('tmp/js/*.js')
-        .pipe(rename({ suffix: '.min' }))
-        .pipe(uglify())
-        .pipe(dest('dist/js'))
-}
-
-function jsMinifyContentScripts () {
-    return src('tmp/js/contentscripts/*.js')
-        .pipe(concat('contentscripts.js'))
-        .pipe(dest('tmp/bundle/js'))
-        .pipe(rename({ suffix: '.min' }))
-        .pipe(uglify())
-        .pipe(dest('dist/js'))
-}
-
-function jsMinifyBackground () {
-    return src('tmp/js/background/*.js')
-        .pipe(concat('background.js'))
-        .pipe(dest('tmp/bundle/js'))
-        .pipe(rename({ suffix: '.min' }))
-        .pipe(uglify())
-        .pipe(dest('dist/js'))
-}
-
 function jsLint () {
     return src('src/js/**/*.js')
         .pipe(eslint({
@@ -106,8 +126,6 @@ function jsLint () {
         .pipe(eslint.format())
         .pipe(eslint.failAfterError())
 }
-
-const jsMinify = parallel(jsMinifyBackground, jsMinifyContentScripts, jsMinifyOthers)
 
 function zipFiles () {
     return src('dist')
@@ -128,9 +146,9 @@ function cleanDist () {
 }
 
 function watchFiles (cb) {
-    watch('src/*.json', series(jsonMinify))
-    watch('src/*.html', series(htmlMinify))
-    watch('src/js/**/*.js', series(jsLint, jsTranspile, jsMinify))
+    watch('src/**/*.json', series(jsonMinify))
+    watch('src/**/*.html', series(htmlMinify))
+    watch('src/js/**/*.js', series(jsLint, jsTranspile, jsRollup, jsMinify))
     watch('src/scss/**/*.scss', series(cssTranspile, cssMinify))
     watch('src/img/**/*.+(png|jpg|gif|svg)', series(imageMinify))
     cb() // Async completion
@@ -140,8 +158,9 @@ exports.clean = parallel(cleanDist, cleanTmp, removeZip)
 exports.watch = watchFiles
 exports.default = series(
     cleanDist,
-    parallel(jsLint),
+    parallel(jsLint, jsVendor, cssVendor, fontVendor),
     parallel(jsTranspile, cssTranspile),
+    jsRollup,
     parallel(cssMinify, jsMinify, htmlMinify, imageMinify, jsonMinify),
     zipFiles,
     cleanTmp
