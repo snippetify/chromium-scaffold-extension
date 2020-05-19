@@ -12,6 +12,7 @@
         "chrome": "readonly",
         "Atomics": "readonly",
         "SimpleMDE": "readonly",
+        "SimpleBar": "readonly",
         "CodeMirror": "readonly",
         "SharedArrayBuffer": "readonly"
     },

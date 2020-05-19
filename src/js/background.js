@@ -31,6 +31,10 @@ class Background {
         })
     }
 
+    get csPort () {
+        return chrome.runtime.connect({ name: CS_PORT })
+    }
+
     createContextMenu () {
         chrome.contextMenus.create({
             id: 'snippetifyContextMenu',

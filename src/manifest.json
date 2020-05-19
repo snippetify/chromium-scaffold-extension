@@ -33,9 +33,6 @@
         ],
         "exclude_matches": ["https://snippetify.com/*"],
         "css": [
-            "vendor/css/codemirror.css",
-            "vendor/css/bootstrap.min.css",
-            "vendor/css/simplemde.min.css",
             "css/contentscripts.min.css"
         ],
         "js": [

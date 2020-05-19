@@ -2,7 +2,9 @@ import {
     CS_PORT,
     CS_SNIPPETS_COUNT,
     CS_SELECTED_SNIPPET,
-    SNIPPETIFY_API_TOKEN
+    SNIPPETIFY_API_TOKEN,
+    REVIEW_SLECTED_SNIPPET,
+    SNIPPETIFY_FOUND_SNIPPETS
 } from './contants'
 
 /**
@@ -26,9 +28,11 @@ class ContentScripts {
 
     constructor () {
         this.addBtnToCodeTag()
+        this.saveFoundSnippets()
         this.onPageVisibilityChanged()
         this.postSnippetsCountMessage()
         this.appendModalTemplateToPage()
+        this.listenForSnippetReviewMessage()
     }
 
     postSnippetsCountMessage () {
@@ -48,14 +52,26 @@ class ContentScripts {
     }
 
     onPageVisibilityChanged () {
-        const self = this
-        window.addEventListener('visibilitychange', function () {
-            self.postSnippetsCountMessage()
+        window.addEventListener('visibilitychange', () => {
+            this.saveFoundSnippets()
+            this.postSnippetsCountMessage()
         })
     }
 
     getSnippetToken (callback) {
         chrome.storage.sync.get(SNIPPETIFY_API_TOKEN, callback)
+    }
+
+    listenForSnippetReviewMessage () {
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            for (const key in changes) {
+                if (key === REVIEW_SLECTED_SNIPPET) {
+                    const item = changes[key]
+                    console.log('value..')
+                    console.log(JSON.stringify(item.newValue))
+                }
+            }
+        })
     }
 
     createVuejsInstance () {
@@ -119,7 +135,7 @@ class ContentScripts {
 
         return {
             title: $('head > title').text(),
-            code: parent.find('code').text(),
+            code: parent.find('code').html(),
             desc: `${parent.prev('p').html()} ${parent.next('p').html()}`,
             tags: getTags(parent),
             meta: { name: window.location.hostname, url: window.location.href }
@@ -150,6 +166,14 @@ class ContentScripts {
             self.hydrateModalForm(payload) // Hydrate form
             return false // Prevent default
         })
+    }
+
+    saveFoundSnippets () {
+        const items = []
+        $('pre > code').each((_, el) => {
+            items.push(this.getSnippetFromPage($(el).parent().first())) // Get snippet
+        })
+        chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: items })
     }
 }
 
