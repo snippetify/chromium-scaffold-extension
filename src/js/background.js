@@ -10,7 +10,7 @@ import {
 } from './contants'
 
 /**
- * App event listeners.
+ * Background. App event listeners.
  * @license MIT
  * @author Evens Pierre <pierre.evens16@gmail.com>
 */
@@ -24,15 +24,10 @@ class Background {
     }
 
     onInstalled () {
-        const self = this
-        chrome.runtime.onInstalled.addListener(function () {
-            self.createContextMenu()
-            self.saveCookieToStorage()
+        chrome.runtime.onInstalled.addListener(() => {
+            this.createContextMenu()
+            this.saveCookieToStorage()
         })
-    }
-
-    get csPort () {
-        return chrome.runtime.connect({ name: CS_PORT })
     }
 
     createContextMenu () {

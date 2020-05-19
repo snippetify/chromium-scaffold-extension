@@ -1,6 +1,9 @@
-// CS => CONTENT SCRIPT
+/**
+ * App constants.
+ * @license MIT
+ * @author Evens Pierre <pierre.evens16@gmail.com>
+*/
 export const CS_PORT = 'cs_port'
-export const POPUP_PORT = 'popup_port'
 export const SNIPPETIFY_DOMAIN = 'snippetify.com'
 export const CS_SNIPPETS_LIST = 'cs_snippets_list'
 export const CS_SNIPPETS_COUNT = 'cs_snippets_count'

@@ -1,7 +1,11 @@
-import { SNIPPETIFY_SAVE_USER, SNIPPETIFY_FOUND_SNIPPETS, REVIEW_SLECTED_SNIPPET } from './contants'
+import {
+    SNIPPETIFY_SAVE_USER,
+    REVIEW_SLECTED_SNIPPET,
+    SNIPPETIFY_FOUND_SNIPPETS
+} from './contants'
 
 /**
- * App event listeners.
+ * Browser action. Popup script.
  * @license MIT
  * @author Evens Pierre <pierre.evens16@gmail.com>
 */

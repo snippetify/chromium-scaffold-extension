@@ -2,7 +2,6 @@ import {
     CS_PORT,
     CS_SNIPPETS_COUNT,
     CS_SELECTED_SNIPPET,
-    SNIPPETIFY_API_TOKEN,
     REVIEW_SLECTED_SNIPPET,
     SNIPPETIFY_FOUND_SNIPPETS
 } from './contants'
@@ -43,6 +42,10 @@ class ContentScripts {
         this.port.postMessage({ type: CS_SELECTED_SNIPPET, payload: payload })
     }
 
+    /**
+     * Insert snippetify btn to the DOM.
+     * @returns void
+     */
     addBtnToCodeTag () {
         $('pre > code').each((_, el) => {
             $(el).parent().addClass('snippetify-snippet-wrapper')
@@ -51,6 +54,10 @@ class ContentScripts {
         this.onSnippetBtnClicked()
     }
 
+    /**
+     * Fire new event on navigator tab changed.
+     * @returns void
+     */
     onPageVisibilityChanged () {
         window.addEventListener('visibilitychange', () => {
             this.saveFoundSnippets()
@@ -58,10 +65,10 @@ class ContentScripts {
         })
     }
 
-    getSnippetToken (callback) {
-        chrome.storage.sync.get(SNIPPETIFY_API_TOKEN, callback)
-    }
-
+    /**
+     * Listen selected snippet event from browser popup.
+     * @returns void
+     */
     listenForSnippetReviewMessage () {
         chrome.storage.onChanged.addListener((changes, namespace) => {
             for (const key in changes) {
@@ -125,6 +132,10 @@ class ContentScripts {
         })
     }
 
+    /**
+     * Get snippet from page and create a snippet object.
+     * @returns void
+     */
     getSnippetFromPage (parent) {
         const getTags = parent => { // Get tags from page
             return (parent.attr('class') || '').split(' ')
@@ -157,6 +168,10 @@ class ContentScripts {
         })
     }
 
+    /**
+     * On snippet btn clicked event to launch modal box.
+     * @returns void
+     */
     onSnippetBtnClicked () {
         const self = this
         $('pre').on('click', '#snippetifyAction', function (e) {
@@ -168,6 +183,10 @@ class ContentScripts {
         })
     }
 
+    /**
+     * Save all found snippets, so browser popup can get them.
+     * @returns void
+     */
     saveFoundSnippets () {
         const items = []
         $('pre > code').each((_, el) => {
