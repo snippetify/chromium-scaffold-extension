@@ -4,9 +4,27 @@ body {
 .fav-text-color {
     color: #ff5722!important;
 }
+.snippetify-iframe {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    z-index: 1000000!important;
+    border: 0 none transparent!important;
+    background-color: transparent!important;
+    &.hide {
+        width: 0%!important;
+        height: 0%!important;
+        display: none!important;
+        position: relative!important;
+    }
+}
 .snippetify-snippet-wrapper {
     position: relative!important;
-    .save-btn {
+    .snippet-action {
         top: 5px;
         right: 5px;
         width: 20px;

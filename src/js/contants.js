@@ -3,13 +3,15 @@
  * @license MIT
  * @author Evens Pierre <pierre.evens16@gmail.com>
 */
-export const CS_PORT = 'cs_port'
+export const CS_TARGET = 'cs_target'
+export const BA_TARGET = 'ba_target'
+export const CS_OPEN_MODAL = 'cs_open_modal'
+export const CS_CLOSE_MODAL = 'cs_close_modal'
+export const CS_MODAL_TARGET = 'cs_modal_target'
 export const SNIPPETIFY_DOMAIN = 'snippetify.com'
-export const CS_SNIPPETS_LIST = 'cs_snippets_list'
+export const CS_FOUND_SNIPPETS = 'cs_found_snippets'
 export const CS_SNIPPETS_COUNT = 'cs_snippets_count'
 export const SNIPPETIFY_URL = 'https://snippetify.com'
-export const CS_SELECTED_SNIPPET = 'cs_selected_snippet'
-export const CS_GET_SNIPPETS_LIST = 'cs_get_snippets_list'
 export const SNIPPETIFY_API_TOKEN = 'snippetify_api_token'
 export const SNIPPETIFY_SAVE_USER = 'snippetify_save_user'
 export const SNIPPETIFY_API_URL = 'https://api.snippetify.com'

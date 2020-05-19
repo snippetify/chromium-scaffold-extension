@@ -1,9 +1,11 @@
 import {
-    CS_PORT,
+    CS_TARGET,
+    CS_OPEN_MODAL,
+    CS_CLOSE_MODAL,
+    CS_MODAL_TARGET,
     CS_SNIPPETS_COUNT,
-    CS_SELECTED_SNIPPET,
-    REVIEW_SLECTED_SNIPPET,
-    SNIPPETIFY_FOUND_SNIPPETS
+    CS_FOUND_SNIPPETS,
+    REVIEW_SLECTED_SNIPPET
 } from './contants'
 
 /**
@@ -17,51 +19,38 @@ class ContentScripts {
     simpleMde
     codeMirror
 
-    get port () {
-        return chrome.runtime.connect({ name: CS_PORT })
-    }
-
-    get modalUrl () {
-        return chrome.runtime.getURL('page_modal.html')
-    }
-
     constructor () {
-        this.addBtnToCodeTag()
-        this.saveFoundSnippets()
-        this.onPageVisibilityChanged()
-        this.postSnippetsCountMessage()
-        this.appendModalTemplateToPage()
-        this.listenForSnippetReviewMessage()
-    }
-
-    postSnippetsCountMessage () {
-        this.port.postMessage({ type: CS_SNIPPETS_COUNT, payload: $('pre > code').length })
-    }
-
-    postSelectedSnippetMessage (payload) {
-        this.port.postMessage({ type: CS_SELECTED_SNIPPET, payload: payload })
+        this.insertIframeToDom()
+        this.snippetReviewListener()
+        this.navigationEventListener()
+        this.insertSnippetActionToDom()
     }
 
     /**
-     * Insert snippetify btn to the DOM.
-     * @returns void
-     */
-    addBtnToCodeTag () {
-        $('pre > code').each((_, el) => {
-            $(el).parent().addClass('snippetify-snippet-wrapper')
-            $(el).after($('<a href="#" class="save-btn" id="snippetifyAction"></a>'))
-        })
-        this.onSnippetBtnClicked()
+     * Get page modal url
+     * @returns string
+    */
+    get modalUrl () {
+        return chrome.runtime.getURL('page_modal.html')
     }
 
     /**
      * Fire new event on navigator tab changed.
      * @returns void
      */
-    onPageVisibilityChanged () {
-        window.addEventListener('visibilitychange', () => {
-            this.saveFoundSnippets()
-            this.postSnippetsCountMessage()
+    navigationEventListener () {
+        chrome.runtime.onMessage.addListener((e, sender, callback) => {
+            if (e.target === CS_TARGET && e.type === CS_SNIPPETS_COUNT) { // Snippet count
+                const payload = { payload: $('pre > code').length }
+                callback(payload)
+            } else if (e.target === CS_TARGET && e.type === CS_FOUND_SNIPPETS) { // Snippet list
+                const items = []
+                $('pre > code').each((_, el) => {
+                    items.push(this.fetchSnippetFromDom($(el).parent().first()))
+                })
+                const payload = { payload: items }
+                callback(payload)
+            }
         })
     }
 
@@ -69,75 +58,19 @@ class ContentScripts {
      * Listen selected snippet event from browser popup.
      * @returns void
      */
-    listenForSnippetReviewMessage () {
-        chrome.storage.onChanged.addListener((changes, namespace) => {
-            for (const key in changes) {
-                if (key === REVIEW_SLECTED_SNIPPET) {
-                    const item = changes[key]
-                    console.log('value..')
-                    console.log(JSON.stringify(item.newValue))
-                }
-            }
-        })
-    }
-
-    createVuejsInstance () {
-        if (this.vm) return
-        this.vm = new Vue({
-            el: '#snippetifyWrapper',
-            data: {
-                modalTitle: 'Save snippet',
-                title: '',
-                code: '',
-                desc: '',
-                tags: ''
-            },
-            methods: {
-                submit () {
-                    console.log(JSON.stringify(this.getPayload()))
-                },
-                getPayload () {
-                    return {
-                        title: this.title,
-                        code: this.code,
-                        tags: this.tags,
-                        description: this.desc
-                    }
-                }
-            }
-        })
-    }
-
-    appendModalTemplateToPage () {
-        const self = this
-        $.get(this.modalUrl, (data) => {
-            $('body').append($('<div id="snippetifyWrapper">').html(data))
-            self.createVuejsInstance() // Init vuejs
-            self.createCodeMirrorInstance() // Init codeMirror
-            self.createSimpleMdeInstance() // Init simple mde
-        })
-    }
-
-    createCodeMirrorInstance () {
-        this.codeMirror = CodeMirror.fromTextArea($('#snippetifyWrapper #code')[0], {
-            lineNumbers: true
-        })
-    }
-
-    createSimpleMdeInstance () {
-        this.simpleMde = new SimpleMDE({
-            forceSync: true,
-            placeholder: 'Add a description',
-            element: $('#snippetifyWrapper #desc')[0]
+    snippetReviewListener () {
+        chrome.runtime.onMessage.addListener(e => {
+            if (e.target === CS_TARGET && e.type === REVIEW_SLECTED_SNIPPET) this.openIframe(e.payload)
         })
     }
 
     /**
      * Get snippet from page and create a snippet object.
-     * @returns void
+     * @returns array
      */
-    getSnippetFromPage (parent) {
-        const getTags = parent => { // Get tags from page
+    fetchSnippetFromDom (parent) {
+        // Fetch tags from dom
+        const getTags = parent => {
             return (parent.attr('class') || '').split(' ')
                 .filter(v => (v || '').includes('language'))
                 .flatMap(e => (e || '').split('-'))
@@ -149,50 +82,74 @@ class ContentScripts {
             code: parent.find('code').html(),
             desc: `${parent.prev('p').html()} ${parent.next('p').html()}`,
             tags: getTags(parent),
-            meta: { name: window.location.hostname, url: window.location.href }
+            meta: {
+                target: {
+                    type: 'chrome-ext',
+                    name: chrome.runtime.getManifest().name,
+                    version: chrome.runtime.getManifest().version
+                },
+                webiste: {
+                    url: window.location.href,
+                    name: window.location.hostname,
+                    brand: $('[property="og:image"]').attr('content')
+                }
+            }
         }
     }
 
-    hydrateModalForm (payload) {
-        const self = this
-        this.vm.title = payload.title
-        this.vm.tags = payload.tags.join(', ')
-        this.codeMirror.setValue(payload.code)
-        this.codeMirror.setOption('mode', { name: payload.tags[0] })
-        this.codeMirror.on('change', function () {
-            self.vm.code = self.codeMirror.getValue()
-        })
-        this.simpleMde.value(payload.desc)
-        this.simpleMde.codemirror.on('change', function () {
-            self.vm.desc = self.simpleMde.value()
-        })
-    }
-
     /**
-     * On snippet btn clicked event to launch modal box.
+     * Insert snippetify btn to the DOM.
      * @returns void
      */
-    onSnippetBtnClicked () {
-        const self = this
-        $('pre').on('click', '#snippetifyAction', function (e) {
-            const payload = self.getSnippetFromPage($(e.currentTarget).parent().first()) // Get snippet
-            self.postSelectedSnippetMessage(payload) // Post selected snippet
-            $('#snippetForm').modal('show') // Show modal
-            self.hydrateModalForm(payload) // Hydrate form
+    insertSnippetActionToDom () {
+        // Insert an action button to dom
+        $('pre > code').each((_, el) => {
+            $(el).parent().addClass('snippetify-snippet-wrapper')
+            $(el).after($('<a href="#" class="snippet-action" id="snippetifyAction"></a>'))
+        })
+
+        // Add listener
+        $('pre').on('click', '#snippetifyAction', e => {
+            this.openIframe(this.fetchSnippetFromDom($(e.currentTarget).parent().first())) // Open iframe
             return false // Prevent default
         })
     }
 
     /**
-     * Save all found snippets, so browser popup can get them.
+     * Append iframe to dom.
+     * Frame contains a modal for snippet saving.
      * @returns void
      */
-    saveFoundSnippets () {
-        const items = []
-        $('pre > code').each((_, el) => {
-            items.push(this.getSnippetFromPage($(el).parent().first())) // Get snippet
+    insertIframeToDom () {
+        // Append frame to dom
+        $('body').append($('<iframe>')
+            .addClass('snippetify-iframe hide').attr({
+                src: this.modalUrl,
+                id: 'snippetifyIframe',
+                name: 'snippetifyIframe'
+            }))
+
+        // Add frame listener
+        chrome.runtime.onMessage.addListener(e => {
+            if (e.target === CS_TARGET && e.type === CS_CLOSE_MODAL) this.closeIframe()
         })
-        chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: items })
+    }
+
+    /**
+     * Fire event to open iframe and inner modal.
+     * @returns void
+     */
+    openIframe (payload) {
+        $('#snippetifyIframe').removeClass('hide')
+        chrome.runtime.sendMessage({ target: CS_MODAL_TARGET, type: CS_OPEN_MODAL, payload: payload })
+    }
+
+    /**
+     * Close the iframe.
+     * @returns void
+     */
+    closeIframe () {
+        $('#snippetifyIframe').addClass('hide')
     }
 }
 

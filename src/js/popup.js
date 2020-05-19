@@ -1,7 +1,8 @@
 import {
     SNIPPETIFY_SAVE_USER,
     REVIEW_SLECTED_SNIPPET,
-    SNIPPETIFY_FOUND_SNIPPETS
+    SNIPPETIFY_FOUND_SNIPPETS,
+    CS_TARGET
 } from './contants'
 
 /**
@@ -69,7 +70,8 @@ class Popup {
 
     addListenersToViews () {
         $('#app').on('click', '[data-snippet]', e => {
-            chrome.storage.local.set({ [REVIEW_SLECTED_SNIPPET]: $(e.currentTarget).data('snippet') })
+            window.close() // Close Popup
+            chrome.runtime.sendMessage({ target: CS_TARGET, type: REVIEW_SLECTED_SNIPPET, payload: $(e.currentTarget).data('snippet') })
         })
     }
 }

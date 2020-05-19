@@ -36,32 +36,33 @@
             "css/contentscripts.min.css"
         ],
         "js": [
-            "vendor/js/vue.min.js",
             "vendor/js/jquery.min.js",
-            "vendor/js/codemirror.js",
-            "vendor/js/bootstrap.min.js",
-            "vendor/js/simplemde.min.js",
             "js/contentscripts.min.js"
         ],
         "run_at": "document_idle",
         "all_frames": false
+    }, {
+        "matches": [
+            "http://*/*",
+            "https://*/*"
+        ],
+        "exclude_matches": ["https://snippetify.com/*"],
+        "css": [
+            "vendor/css/codemirror.css",
+            "vendor/css/bootstrap.min.css",
+            "vendor/css/simplemde.min.css",
+            "css/pagemodal.min.css"
+        ],
+        "js": [
+            "vendor/js/jquery.min.js",
+            "vendor/js/codemirror.js",
+            "vendor/js/bootstrap.min.js",
+            "vendor/js/simplemde.min.js",
+            "js/pagemodal.min.js"
+        ],
+        "run_at": "document_idle",
+        "all_frames": true
     }],
-    "commands": {
-        "save-snippet": {
-            "suggested_key": {
-                "default": "Ctrl+Shift+S",
-                "mac": "MacCtrl+Shift+S"
-            },
-            "description": "__MSG_commandsSaveSnippet__"
-        },
-        "_execute_browser_action": {
-            "suggested_key": {
-                "default": "Ctrl+Shift+A",
-                "mac": "MacCtrl+Shift+A"
-            },
-            "description": "__MSG_commandsExecuteBrowserAction__"
-        }
-    },
     "background": {
         "persistent": false,
         "scripts": ["js/background.min.js"]
@@ -75,6 +76,7 @@
         "http://*/*",
         "https://*/*",
         "contextMenus",
+        "webNavigation",
         "*://*.google.com/",
         "https://snippetify.com/",
         "https://api.snippetify.com/"

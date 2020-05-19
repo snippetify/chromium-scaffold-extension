@@ -1,12 +1,16 @@
 import $ from 'jquery'
 import {
-    CS_PORT,
+    CS_TARGET,
     SNIPPETIFY_URL,
+    CS_MODAL_TARGET,
     CS_SNIPPETS_COUNT,
     SNIPPETIFY_DOMAIN,
+    CS_FOUND_SNIPPETS,
     SNIPPETIFY_API_URL,
     SNIPPETIFY_API_TOKEN,
-    SNIPPETIFY_SAVE_USER
+    SNIPPETIFY_SAVE_USER,
+    REVIEW_SLECTED_SNIPPET,
+    SNIPPETIFY_FOUND_SNIPPETS
 } from './contants'
 
 /**
@@ -17,12 +21,15 @@ import {
 class Background {
     constructor () {
         this.onInstalled()
-        this.updateBadgeText()
-        this.onCommandExecuted()
-        this.createCookieListener()
-        this.onContextMenuClicked()
+        this.cookieEventListener()
+        this.navigationEventListener()
+        this.contentScriptsEventListener()
     }
 
+    /**
+     * Execute action when extension installed.
+     * @returns void
+    */
     onInstalled () {
         chrome.runtime.onInstalled.addListener(() => {
             this.createContextMenu()
@@ -30,26 +37,34 @@ class Background {
         })
     }
 
+    /**
+     * Create context menu on installed.
+     * @returns void
+    */
     createContextMenu () {
+        // Create menu
         chrome.contextMenus.create({
             id: 'snippetifyContextMenu',
             title: 'Save snippet',
             contexts: ['selection']
         })
-    }
 
-    onContextMenuClicked () {
+        // Add listener
         chrome.contextMenus.onClicked.addListener(function (info) {
-            console.log(`Text: ${info.selectionText}, url: ${info.pageUrl}`)
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    target: CS_TARGET,
+                    type: REVIEW_SLECTED_SNIPPET,
+                    payload: { code: info.selectionText }
+                })
+            })
         })
     }
 
-    onCommandExecuted () {
-        chrome.commands.onCommand.addListener(function (command) {
-            console.log('Command:', command)
-        })
-    }
-
+    /**
+     * Save snippetify user token on installed.
+     * @returns void
+    */
     saveCookieToStorage () {
         chrome.cookies.get({ url: SNIPPETIFY_URL, name: 'token' }, cookie => {
             const value = ((cookie || {}).value || '')
@@ -65,7 +80,12 @@ class Background {
         })
     }
 
-    createCookieListener () {
+    /**
+     * Listen for cookies changed.
+     * Save snippetify user token on installed.
+     * @returns void
+    */
+    cookieEventListener () {
         chrome.cookies.onChanged.addListener(e => {
             if ((e.cookie || {}).domain !== SNIPPETIFY_DOMAIN) return
             if (e.removed) {
@@ -80,16 +100,51 @@ class Background {
         })
     }
 
-    updateBadgeText () {
-        chrome.runtime.onConnect.addListener(port => {
-            if (port.name !== CS_PORT) return
-            port.onMessage.addListener(e => {
-                if (e.type !== CS_SNIPPETS_COUNT) return
-                chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
+    /**
+     * Listen for page loaded event.
+     * Listen for tab changed event.
+     * @returns void
+    */
+    navigationEventListener () {
+        // Listen for tab changed
+        chrome.tabs.onActivated.addListener(info => {
+            chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_SNIPPETS_COUNT }, e => {
+                if (e && e.payload) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
+            })
+            chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_FOUND_SNIPPETS }, e => {
+                if (e && e.payload) chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: e.payload })
+            })
+        })
+
+        // Listen for page loaded
+        chrome.webNavigation.onCompleted.addListener(info => {
+            chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_SNIPPETS_COUNT }, e => {
+                if (e && e.payload) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
+            })
+            chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_FOUND_SNIPPETS }, e => {
+                if (e && e.payload) chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: e.payload })
             })
         })
     }
 
+    /**
+     * Content scripts event listener.
+     * @returns void
+    */
+    contentScriptsEventListener () {
+        chrome.runtime.onMessage.addListener(e => {
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+                if ([CS_TARGET, CS_MODAL_TARGET].includes(e.target)) {
+                    chrome.tabs.sendMessage(tabs[0].id, e)
+                }
+            })
+        })
+    }
+
+    /**
+     * Authenticate user.
+     * @returns void
+    */
     authenticateUser (token) {
         $.ajax({
             method: 'GET',
@@ -107,6 +162,10 @@ class Background {
         })
     }
 
+    /**
+     * Logout user.
+     * @returns void
+    */
     logoutUser () {
         chrome.storage.local.remove(SNIPPETIFY_API_TOKEN)
         chrome.storage.local.remove(SNIPPETIFY_SAVE_USER)
