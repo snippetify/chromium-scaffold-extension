@@ -3,9 +3,11 @@
  * @license MIT
  * @author Evens Pierre <pierre.evens16@gmail.com>
 */
-export const CS_TARGET = 'cs_target'
-export const BA_TARGET = 'ba_target'
+export const CS_TARGET = 'cs_target' // Content scripts
+export const BA_TARGET = 'ba_target' // Browser action
+export const BG_TARGET = 'bG_target' // Background action
 export const CS_OPEN_MODAL = 'cs_open_modal'
+export const CREATE_NEW_TAB = 'create_new_tab'
 export const CS_CLOSE_MODAL = 'cs_close_modal'
 export const CS_MODAL_TARGET = 'cs_modal_target'
 export const SNIPPETIFY_DOMAIN = 'snippetify.com'

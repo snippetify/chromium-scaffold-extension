@@ -1,4 +1,12 @@
-import { CS_MODAL_TARGET, CS_OPEN_MODAL, CS_TARGET, CS_CLOSE_MODAL } from './contants'
+import {
+    CS_TARGET,
+    BG_TARGET,
+    CS_OPEN_MODAL,
+    CS_CLOSE_MODAL,
+    CREATE_NEW_TAB,
+    CS_MODAL_TARGET,
+    SNIPPETIFY_API_TOKEN
+} from './contants'
 
 /**
  * Background. App event listeners.
@@ -25,18 +33,34 @@ class PageModal {
 
     showModalEventListener () {
         chrome.runtime.onMessage.addListener(e => {
-            if (e.target === CS_MODAL_TARGET && e.type === CS_OPEN_MODAL) $('#snippetForm').modal('show')
+            if (e.target === CS_MODAL_TARGET && e.type === CS_OPEN_MODAL) {
+                chrome.storage.local.get(SNIPPETIFY_API_TOKEN, data => {
+                    const token = data[SNIPPETIFY_API_TOKEN]
+                    if (token) {
+                        $('#snippetForm').modal('show')
+                    } else {
+                        $('#unauthenticatedModal').modal('show')
+                    }
+                })
+            }
         })
     }
 
     registerEventListeners () {
         // On modal hidden
-        $('#snippetForm').on('hidden.bs.modal', function (e) {
+        $('#snippetForm, #unauthenticatedModal').on('hidden.bs.modal', function (e) {
             chrome.runtime.sendMessage({ target: CS_TARGET, type: CS_CLOSE_MODAL })
         })
 
         // On Save clicked
         $('#snippetForm').on('click', '#save', e => {
+            return false
+        })
+
+        // Connect now
+        $('#app').on('click', '#connectNow', e => {
+            chrome.runtime.sendMessage({ target: CS_TARGET, type: CS_CLOSE_MODAL })
+            chrome.runtime.sendMessage({ target: BG_TARGET, type: CREATE_NEW_TAB, payload: 'https://snippetify.com/connect' })
             return false
         })
     }

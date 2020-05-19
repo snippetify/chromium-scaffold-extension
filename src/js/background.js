@@ -10,7 +10,9 @@ import {
     SNIPPETIFY_API_TOKEN,
     SNIPPETIFY_SAVE_USER,
     REVIEW_SLECTED_SNIPPET,
-    SNIPPETIFY_FOUND_SNIPPETS
+    SNIPPETIFY_FOUND_SNIPPETS,
+    BG_TARGET,
+    CREATE_NEW_TAB
 } from './contants'
 
 /**
@@ -109,7 +111,7 @@ class Background {
         // Listen for tab changed
         chrome.tabs.onActivated.addListener(info => {
             chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_SNIPPETS_COUNT }, e => {
-                if (e && e.payload) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
+                if (e) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
             })
             chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_FOUND_SNIPPETS }, e => {
                 if (e && e.payload) chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: e.payload })
@@ -119,7 +121,7 @@ class Background {
         // Listen for page loaded
         chrome.webNavigation.onCompleted.addListener(info => {
             chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_SNIPPETS_COUNT }, e => {
-                if (e && e.payload) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
+                if (e) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
             })
             chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_FOUND_SNIPPETS }, e => {
                 if (e && e.payload) chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: e.payload })
@@ -138,6 +140,10 @@ class Background {
                     chrome.tabs.sendMessage(tabs[0].id, e)
                 }
             })
+
+            if (e.target === BG_TARGET && e.type === CREATE_NEW_TAB) {
+                chrome.tabs.create({ url: e.payload })
+            }
         })
     }
 

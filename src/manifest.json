@@ -41,27 +41,6 @@
         ],
         "run_at": "document_idle",
         "all_frames": false
-    }, {
-        "matches": [
-            "http://*/*",
-            "https://*/*"
-        ],
-        "exclude_matches": ["https://snippetify.com/*"],
-        "css": [
-            "vendor/css/codemirror.css",
-            "vendor/css/bootstrap.min.css",
-            "vendor/css/simplemde.min.css",
-            "css/pagemodal.min.css"
-        ],
-        "js": [
-            "vendor/js/jquery.min.js",
-            "vendor/js/codemirror.js",
-            "vendor/js/bootstrap.min.js",
-            "vendor/js/simplemde.min.js",
-            "js/pagemodal.min.js"
-        ],
-        "run_at": "document_idle",
-        "all_frames": true
     }],
     "background": {
         "persistent": false,
