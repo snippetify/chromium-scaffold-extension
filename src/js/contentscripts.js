@@ -71,10 +71,12 @@ class ContentScripts {
     fetchSnippetFromDom (parent) {
         // Fetch tags from dom
         const getTags = parent => {
-            return (parent.attr('class') || '').split(' ')
-                .filter(v => (v || '').includes('language'))
+            const tags = (parent.attr('class') || '').split(' ')
+                .filter(v => (v || '').includes('language') || (v || '').includes('lang'))
                 .flatMap(e => (e || '').split('-'))
-                .filter(e => (e || '').trim().length > 0 && e !== 'language')
+                .filter(e => (e || '').trim().length > 0 && (e !== 'language' && e !== 'lang'))
+            if (parent.find('[data-lang]').length > 0) tags.push(parent.find('[data-lang]').data('lang'))
+            return tags
         }
 
         return {
