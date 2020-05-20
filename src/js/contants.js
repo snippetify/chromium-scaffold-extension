@@ -4,7 +4,6 @@
  * @author Evens Pierre <pierre.evens16@gmail.com>
 */
 export const CS_TARGET = 'cs_target' // Content scripts
-export const BA_TARGET = 'ba_target' // Browser action
 export const BG_TARGET = 'bG_target' // Background action
 export const CS_OPEN_MODAL = 'cs_open_modal'
 export const CREATE_NEW_TAB = 'create_new_tab'

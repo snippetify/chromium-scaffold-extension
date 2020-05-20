@@ -1,5 +1,8 @@
-// import $ from 'jquery'
+/**
+ * Options page.
+ * @license MIT
+ * @author Evens Pierre <pierre.evens16@gmail.com>
+*/
+class Options {}
 
-// $('#save').on('click', (e) => {
-//     alert(1)
-// })
+export default new Options()
