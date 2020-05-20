@@ -6,3 +6,7 @@ body {
 .fav-text-color {
     color: #ff5722!important;
 }
+.CodeMirror, .CodeMirror-scroll {
+    min-height: 150px;
+    max-height: 250px;
+}
