@@ -57,7 +57,7 @@ class Background {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     target: CS_TARGET,
                     type: REVIEW_SLECTED_SNIPPET,
-                    payload: { code: info.selectionText }
+                    payload: { title: '', code: info.selectionText, description: '', tags: [] }
                 })
             })
         })
