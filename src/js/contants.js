@@ -6,6 +6,7 @@
 export const CS_TARGET = 'cs_target' // Content scripts
 export const BG_TARGET = 'bG_target' // Background action
 export const CS_OPEN_MODAL = 'cs_open_modal'
+export const RELOAD_IFRAME = 'reload_frame'
 export const CREATE_NEW_TAB = 'create_new_tab'
 export const CS_CLOSE_MODAL = 'cs_close_modal'
 export const CS_MODAL_TARGET = 'cs_modal_target'

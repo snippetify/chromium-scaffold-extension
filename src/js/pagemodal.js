@@ -2,6 +2,7 @@ import {
     CS_TARGET,
     BG_TARGET,
     CS_OPEN_MODAL,
+    RELOAD_IFRAME,
     CS_CLOSE_MODAL,
     CREATE_NEW_TAB,
     CS_MODAL_TARGET,
@@ -19,7 +20,6 @@ class PageModal {
     simpleMde
     codeMirror
     payload = {}
-    notifyClosedModal = true
 
     constructor () {
         $(document).ready(() => {
@@ -42,7 +42,6 @@ class PageModal {
         chrome.runtime.onMessage.addListener(e => {
             if (e.target === CS_MODAL_TARGET && e.type === CS_OPEN_MODAL) {
                 chrome.storage.local.get(SNIPPETIFY_API_TOKEN, data => {
-                    this.notifyClosedModal = true // Notify closed modal
                     const token = data[SNIPPETIFY_API_TOKEN]
                     if (token) {
                         this.hydrateForm(e.payload) // Hydrate form
@@ -60,19 +59,11 @@ class PageModal {
             }
         })
 
-        // Close opened modal
+        // Reload iframe
         chrome.runtime.onMessage.addListener((e, sender, callback) => {
-            if (e.target === CS_MODAL_TARGET && e.type === CS_CLOSE_MODAL) {
-                if (($('body').attr('class') || '').includes('modal')) {
-                    this.notifyClosedModal = false // Do not notify closed modal
-                    $('#snippetForm, #unauthenticatedModal').on('hidden.bs.modal', () => {
-                        callback()
-                        this.notifyClosedModal = true
-                    })
-                    $('.modal').modal('hide')
-                } else {
-                    callback()
-                }
+            if (e.target === CS_MODAL_TARGET && e.type === RELOAD_IFRAME) {
+                window.location.reload()
+                callback()
             }
         })
     }
@@ -84,7 +75,7 @@ class PageModal {
     localEventListeners () {
         // On modal hidden
         $('#snippetForm, #unauthenticatedModal').on('hidden.bs.modal', () => {
-            if (this.notifyClosedModal) chrome.runtime.sendMessage({ target: CS_TARGET, type: CS_CLOSE_MODAL })
+            chrome.runtime.sendMessage({ target: CS_TARGET, type: CS_CLOSE_MODAL })
         })
 
         // On Save clicked
