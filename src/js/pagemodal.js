@@ -19,6 +19,7 @@ class PageModal {
     simpleMde
     codeMirror
     payload = {}
+    notifyClosedModal = true
 
     constructor () {
         $(document).ready(() => {
@@ -37,11 +38,12 @@ class PageModal {
      * @returns void
     */
     remoteEventListener () {
+        // Open modal
         chrome.runtime.onMessage.addListener(e => {
             if (e.target === CS_MODAL_TARGET && e.type === CS_OPEN_MODAL) {
                 chrome.storage.local.get(SNIPPETIFY_API_TOKEN, data => {
+                    this.notifyClosedModal = true // Notify closed modal
                     const token = data[SNIPPETIFY_API_TOKEN]
-                    $('.modal').modal('hide')
                     if (token) {
                         this.hydrateForm(e.payload) // Hydrate form
                         // Reset element state
@@ -57,6 +59,22 @@ class PageModal {
                 })
             }
         })
+
+        // Close opened modal
+        chrome.runtime.onMessage.addListener((e, sender, callback) => {
+            if (e.target === CS_MODAL_TARGET && e.type === CS_CLOSE_MODAL) {
+                if (($('body').attr('class') || '').includes('modal')) {
+                    this.notifyClosedModal = false // Do not notify closed modal
+                    $('#snippetForm, #unauthenticatedModal').on('hidden.bs.modal', () => {
+                        callback()
+                        this.notifyClosedModal = true
+                    })
+                    $('.modal').modal('hide')
+                } else {
+                    callback()
+                }
+            }
+        })
     }
 
     /**
@@ -66,7 +84,7 @@ class PageModal {
     localEventListeners () {
         // On modal hidden
         $('#snippetForm, #unauthenticatedModal').on('hidden.bs.modal', () => {
-            chrome.runtime.sendMessage({ target: CS_TARGET, type: CS_CLOSE_MODAL })
+            if (this.notifyClosedModal) chrome.runtime.sendMessage({ target: CS_TARGET, type: CS_CLOSE_MODAL })
         })
 
         // On Save clicked
@@ -83,9 +101,15 @@ class PageModal {
 
         // Connect now, redirect to snippetify
         $('#app').on('click', '#connectNow', e => {
+            $('.modal').modal('hide')
             chrome.runtime.sendMessage({ target: CS_TARGET, type: CS_CLOSE_MODAL })
             chrome.runtime.sendMessage({ target: BG_TARGET, type: CREATE_NEW_TAB, payload: 'https://snippetify.com/connect' })
             return false
+        })
+
+        // Hide frame when modal id hidden
+        $('body').on('click', '.modal-backdrop', e => {
+            $('.modal').modal('hide')
         })
     }
 

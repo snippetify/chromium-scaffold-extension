@@ -36,11 +36,11 @@ class ContentScripts {
     navigationEventListener () {
         chrome.runtime.onMessage.addListener((e, sender, callback) => {
             if (e.target === CS_TARGET && e.type === CS_SNIPPETS_COUNT) { // Snippet count
-                const payload = { payload: $('pre > code, .highlight > pre').length }
+                const payload = { payload: $('pre > code, div.highlight > pre').length }
                 callback(payload)
             } else if (e.target === CS_TARGET && e.type === CS_FOUND_SNIPPETS) { // Snippet list
                 const items = []
-                $('pre > code, .highlight > pre').each((_, el) => {
+                $('pre > code, div.highlight > pre').each((_, el) => {
                     items.push(this.fetchSnippetFromDom($(el).parent().first()))
                 })
                 const payload = { payload: items }
@@ -141,13 +141,13 @@ class ContentScripts {
      */
     insertSnippetActionToDom () {
         // Insert an action button to dom
-        $('pre > code, .highlight > pre').each((_, el) => {
+        $('pre > code, div.highlight > pre').each((_, el) => {
             $(el).parent().addClass('snippetify-snippet-wrapper')
             $(el).after($('<a href="#" class="snippet-action" id="snippetifyAction"></a>'))
         })
 
         // Add listener
-        $('pre, .highlight').on('click', '#snippetifyAction', e => {
+        $('pre, div.highlight').on('click', '#snippetifyAction', e => {
             this.openIframe(this.fetchSnippetFromDom($(e.currentTarget).parent().first())) // Open iframe
             return false // Prevent default
         })
@@ -178,8 +178,10 @@ class ContentScripts {
      * @returns void
      */
     openIframe (payload) {
-        $('#snippetifyIframe').removeClass('hide')
-        chrome.runtime.sendMessage({ target: CS_MODAL_TARGET, type: CS_OPEN_MODAL, payload: payload })
+        chrome.runtime.sendMessage({ target: CS_MODAL_TARGET, type: CS_CLOSE_MODAL }, () => { // Close all opened modal
+            $('#snippetifyIframe').removeClass('hide')
+            chrome.runtime.sendMessage({ target: CS_MODAL_TARGET, type: CS_OPEN_MODAL, payload: payload }) // Open modal
+        })
     }
 
     /**
