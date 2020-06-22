@@ -10,72 +10,13 @@
     </head>
     <body>
         <div style="width:400px;" id="app">
-            <div id="userCard" class="mt-2">
-                <div class="text-center mx-2">
-                    <p class="mt-4 hidden avatar"><img width="64px" class="rounded-circle" alt="avatar"></p>
-                    <p class="mt-4 hidden avatar-placeholder">
-                        <span class="fa-stack fa-2x">
-                            <i class="fas fa-circle fa-stack-2x"></i>
-                            <i class="fas fa-stack-1x fa-inverse text-uppercase letter">E</i>
-                        </span>
-                    </p>
-                    <span class="username font-weight-normal text-dark d-block mt-2"></span>
-                    <span class="email text-muted text-lowercase small d-block mt-1"></span>
+            <iframe width="100%" height="290px" src="" id="userCard" name="userCard" frameBorder="0" scrolling="no"></iframe>
+            <div id="spinner" class="py-4 text-center">
+                <div class="spinner-grow" style="color:#e65100;" role="status">
+                    <span class="sr-only">Loading...</span>
                 </div>
-                <div class="text-center mt-3 mx-2">
-                    <span class="mx-2 score-container">
-                        <span class="fa-stack fa-1x">
-                            <i class="far text-deep-orange fa-circle fa-stack-2x"></i>
-                            <i class="fas text-deep-orange fa-gem fa-stack-1x fa-inverse"></i>
-                        </span>
-                        <small class="badge text-center">
-                            <span class="text-white font-weight-lighter diamond-count">0</span>
-                        </small>
-                    </span>
-                    <span class="mx-2 score-container">
-                        <span class="fa-stack fa-1x">
-                            <i class="far text-green fa-circle fa-stack-2x"></i>
-                            <i class="fas text-green fa-square fa-rotate-270 fa-stack-1x"></i>
-                        </span>
-                        <small class="badge text-center">
-                            <span class="text-white font-weight-lighter rubis-count">0</span>
-                        </small>
-                    </span>
-                    <span class="mx-2 score-container">
-                        <span class="fa-stack fa-1x">
-                            <i class="far text-purple fa-circle fa-stack-2x"></i>
-                            <i class="fas text-purple fa-circle fa-stack-1x fa-inverse"></i>
-                        </span>
-                        <small class="badge text-center">
-                            <span class="text-white font-weight-lighter saphir-count">0</span>
-                        </small>
-                    </span>
-                </div>
-                <div class="text-center mt-4 mx-2">
-                    <span>
-                        <span class="fa-stack fa-sm text-orange">
-                            <i class="fas fa-circle fa-stack-2x"></i>
-                            <i class="fas fa-code fa-stack-1x fa-inverse"></i>
-                        </span>
-                        <span class="chip-item">
-                            <i class="fas fa-caret-left fa-xs"></i>
-                            <span class="snippets-count">No snippets</span>
-                        </span>
-                    </span>
-                    <span class="ml-3">
-                        <span class="fa-stack fa-sm text-dark-green">
-                            <i class="fas fa-circle fa-stack-2x"></i>
-                            <i class="fas fa-question fa-stack-1x fa-inverse"></i>
-                        </span>
-                        <span class="chip-item">
-                            <i class="fas fa-caret-left fa-xs"></i>
-                            <span class="challenges-count">No challenges</span>
-                        </span>
-                    </span>
-                </div>
-                <div class="divider mt-3"></div>
             </div>
-            <div class="snippet-box m-3">
+            <div class="snippet-box mx-3 mb-3 mt-2">
                 <div class="d-flex mb-1">
                     <h6 class="text-dark title">Snippets</h6>
                 </div>

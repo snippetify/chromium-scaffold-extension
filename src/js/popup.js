@@ -1,8 +1,9 @@
 import {
+    CS_TARGET,
+    GO_TO_SNIPPET,
+    CS_FOUND_SNIPPETS,
     SNIPPETIFY_SAVE_USER,
-    REVIEW_SLECTED_SNIPPET,
-    SNIPPETIFY_FOUND_SNIPPETS,
-    CS_TARGET
+    SNIPPETIFY_USER_CARD_URL
 } from './contants'
 
 /**
@@ -12,66 +13,61 @@ import {
 */
 class Popup {
     constructor () {
+        this.hydrateUserCard()
         $(document).ready(() => {
-            this.hydrateUserCard()
             this.hydrateSnippetsList()
             this.addListenersToViews()
         })
     }
 
     hydrateSnippetsList () {
-        chrome.storage.local.get(SNIPPETIFY_FOUND_SNIPPETS, data => {
-            const items = data[SNIPPETIFY_FOUND_SNIPPETS]
-            const container = $('.snippet-box .snippet-list')
-            if (items && items.length > 0) {
-                container.html('')
-                $('.snippet-box .title').after(`<small class="ml-auto text-secondary total-found">${items.length} found in this page</small>`)
-                items.forEach(v => {
-                    const row = $('<div class="snippet-row"></div>')
-                    const lang = $('<span class="language"></span>')
-                    row.html($(`<pre class="p-0 my-1" data-snippet='${JSON.stringify(v)}'></pre>`)
-                        .html($('<code class="mt-0 pt-0 d-block"></code>').html(v.code)))
-                    if (v.tags && v.tags.length > 0) {
-                        lang.text(v.tags[0])
-                        row.prepend(lang)
-                    }
-                    container.append(row)
-                })
-                $('.snippet-box .snippet-list pre').each((_, el) => { (new SimpleBar(el)).recalculate() })
-            }
+        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+            chrome.tabs.sendMessage(tabs[0].id, { target: CS_TARGET, type: CS_FOUND_SNIPPETS }, res => {
+                const items = res.payload
+                const container = $('.snippet-box .snippet-list')
+                if (items && items.length > 0) {
+                    container.html('')
+                    $('.snippet-box .title').after(`<small class="ml-auto text-secondary total-found">${items.length} found in this page</small>`)
+                    items.forEach(v => {
+                        const row = $('<div class="snippet-row"></div>')
+                        const lang = $('<span class="language"></span>')
+                        row.html($(`<pre class="p-0 my-1" data-uid='${v.uid}'></pre>`)
+                            .html($('<code class="mt-0 pt-0 d-block"></code>').text(v.code)))
+                        if (v.tags && v.tags.length > 0) {
+                            lang.text(v.tags[0].name)
+                            row.prepend(lang)
+                        }
+                        container.append(row)
+                    })
+                    $('.snippet-box .snippet-list pre').each((_, el) => { (new SimpleBar(el)).recalculate() })
+                }
+            })
         })
     }
 
     hydrateUserCard () {
         chrome.storage.local.get(SNIPPETIFY_SAVE_USER, data => {
             const userCard = $('#userCard')
+            const spinner = $('#spinner')
             const userInfo = data[SNIPPETIFY_SAVE_USER]
             if (!userInfo) {
                 userCard.hide()
             } else {
-                if (userInfo.avatar.medium) {
-                    userCard.find('.avatar').removeClass('hidden')
-                    userCard.find('.avatar-placeholder').addClass('hidden')
-                    userCard.find('.avatar').find('img').attr('src', userInfo.avatar.medium)
-                } else {
-                    userCard.find('.avatar').addClass('hidden')
-                    userCard.find('.avatar-placeholder').removeClass('hidden').find('.letter').text((userInfo.username || ' ').charAt(0))
-                }
-                userCard.find('.username').text(userInfo.username)
-                userCard.find('.email').text(userInfo.email)
-                userCard.find('.diamond-count').text(4)
-                userCard.find('.rubis-count').text(12)
-                userCard.find('.saphir-count').text(34)
-                userCard.find('.snippets-count').text('20 snippets')
-                userCard.find('.challenges-count').text('120 challenges')
+                userCard.hide().attr({ src: SNIPPETIFY_USER_CARD_URL })
+                userCard.on('load', () => {
+                    userCard.show()
+                    spinner.hide()
+                })
             }
         })
     }
 
     addListenersToViews () {
-        $('#app').on('click', '[data-snippet]', e => {
+        $('#app').on('click', '[data-uid]', e => {
             window.close() // Close Popup
-            chrome.runtime.sendMessage({ target: CS_TARGET, type: REVIEW_SLECTED_SNIPPET, payload: $(e.currentTarget).data('snippet') })
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+                chrome.tabs.sendMessage(tabs[0].id, { target: CS_TARGET, type: GO_TO_SNIPPET, payload: { uid: $(e.currentTarget).data('uid') } })
+            })
         })
     }
 }

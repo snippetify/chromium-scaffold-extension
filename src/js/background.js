@@ -2,17 +2,12 @@ import $ from 'jquery'
 import {
     CS_TARGET,
     SNIPPETIFY_URL,
-    CS_MODAL_TARGET,
     CS_SNIPPETS_COUNT,
     SNIPPETIFY_DOMAIN,
-    CS_FOUND_SNIPPETS,
     SNIPPETIFY_API_URL,
     SNIPPETIFY_API_TOKEN,
     SNIPPETIFY_SAVE_USER,
-    REVIEW_SLECTED_SNIPPET,
-    SNIPPETIFY_FOUND_SNIPPETS,
-    BG_TARGET,
-    CREATE_NEW_TAB
+    REVIEW_SELECTED_SNIPPET
 } from './contants'
 
 /**
@@ -25,7 +20,6 @@ class Background {
         this.onInstalled()
         this.cookieEventListener()
         this.navigationEventListener()
-        this.contentScriptsEventListener()
     }
 
     /**
@@ -56,8 +50,8 @@ class Background {
             chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     target: CS_TARGET,
-                    type: REVIEW_SLECTED_SNIPPET,
-                    payload: { title: '', code: info.selectionText, description: '', tags: [] }
+                    type: REVIEW_SELECTED_SNIPPET,
+                    payload: { title: '', code: info.selectionText, description: '', tags: [], type: 'wiki' }
                 })
             })
         })
@@ -113,9 +107,6 @@ class Background {
             chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_SNIPPETS_COUNT }, e => {
                 if (e) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
             })
-            chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_FOUND_SNIPPETS }, e => {
-                if (e && e.payload) chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: e.payload })
-            })
         })
 
         // Listen for page loaded
@@ -123,27 +114,13 @@ class Background {
             chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_SNIPPETS_COUNT }, e => {
                 if (e) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
             })
-            chrome.tabs.sendMessage(info.tabId, { target: CS_TARGET, type: CS_FOUND_SNIPPETS }, e => {
-                if (e && e.payload) chrome.storage.local.set({ [SNIPPETIFY_FOUND_SNIPPETS]: e.payload })
-            })
         })
-    }
 
-    /**
-     * Content scripts event listener.
-     * @returns void
-    */
-    contentScriptsEventListener () {
-        chrome.runtime.onMessage.addListener(e => {
-            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-                if ([CS_TARGET, CS_MODAL_TARGET].includes(e.target)) {
-                    chrome.tabs.sendMessage(tabs[0].id, e)
-                }
+        // On url changed
+        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+            chrome.tabs.sendMessage(tabId, { target: CS_TARGET, type: CS_SNIPPETS_COUNT }, e => {
+                if (e) chrome.browserAction.setBadgeText({ text: `${e.payload || ''}` })
             })
-
-            if (e.target === BG_TARGET && e.type === CREATE_NEW_TAB) {
-                chrome.tabs.create({ url: e.payload })
-            }
         })
     }
 

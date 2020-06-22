@@ -1,11 +1,10 @@
 import {
     CS_TARGET,
-    CS_OPEN_MODAL,
-    CS_CLOSE_MODAL,
-    CS_MODAL_TARGET,
+    GO_TO_SNIPPET,
     CS_SNIPPETS_COUNT,
     CS_FOUND_SNIPPETS,
-    REVIEW_SLECTED_SNIPPET
+    REVIEW_SELECTED_SNIPPET,
+    SNIPPETIFY_NEW_SNIPPET_URL
 } from './contants'
 
 /**
@@ -18,19 +17,13 @@ class ContentScripts {
         this.insertIframeToDom()
         this.snippetReviewListener()
         this.navigationEventListener()
+        this.goToSnippetEventListener()
         this.insertSnippetActionToDom()
     }
 
     /**
-     * Get page modal url
-     * @returns string
-    */
-    get modalUrl () {
-        return chrome.runtime.getURL('page_modal.html')
-    }
-
-    /**
      * Fire new event on navigator tab changed.
+     * Send list and number of snippets.
      * @returns void
      */
     navigationEventListener () {
@@ -55,7 +48,21 @@ class ContentScripts {
      */
     snippetReviewListener () {
         chrome.runtime.onMessage.addListener(e => {
-            if (e.target === CS_TARGET && e.type === REVIEW_SLECTED_SNIPPET) this.openIframe(e.payload)
+            if (e.target === CS_TARGET && e.type === REVIEW_SELECTED_SNIPPET) this.openIframe(e.payload)
+        })
+    }
+
+    /**
+     * Go to specific snippet.
+     * @returns void
+     */
+    goToSnippetEventListener () {
+        chrome.runtime.onMessage.addListener(e => {
+            if (e.target === CS_TARGET && e.type === GO_TO_SNIPPET) {
+                $('html, body').animate({
+                    scrollTop: (parseInt($(`[data-uid="${e.payload.uid}"]`).offset().top) - 100)
+                }, 2000)
+            }
         })
     }
 
@@ -65,9 +72,11 @@ class ContentScripts {
      */
     fetchSnippetFromDom (parent) {
         return {
+            type: 'wiki',
+            uid: parent.data('uid'),
             title: $('head > title').text(),
-            code: parent.find('code, pre').html(),
-            desc: `${parent.prev('p').html()} ${parent.next('p').html()}`,
+            code: parent.find('code, pre').text(),
+            description: `${parent.prev('p').text()} ${parent.next('p').text()}`,
             tags: this.fetchTagsFromDom(parent),
             meta: {
                 target: {
@@ -132,7 +141,7 @@ class ContentScripts {
         }
 
         // Return tags
-        return tags
+        return tags.flatMap(v => ({ name: v }))
     }
 
     /**
@@ -140,9 +149,12 @@ class ContentScripts {
      * @returns void
      */
     insertSnippetActionToDom () {
+        // Return if snippetify snippet
+        if ($('pre').data('provider') === 'snippetify') return
+
         // Insert an action button to dom
-        $('pre > code, div.highlight > pre').each((_, el) => {
-            $(el).parent().addClass('snippetify-snippet-wrapper')
+        $('pre > code, div.highlight > pre').each((i, el) => {
+            $(el).parent().addClass('snippetify-snippet-wrapper').attr({ 'data-uid': i })
             $(el).after($('<a href="#" class="snippet-action" id="snippetifyAction"></a>'))
         })
 
@@ -159,18 +171,22 @@ class ContentScripts {
      * @returns void
      */
     insertIframeToDom () {
-        // Append frame to dom
-        $('body').append($('<iframe>')
-            .addClass('snippetify-iframe hide').attr({
-                src: this.modalUrl,
-                id: 'snippetifyIframe',
-                name: 'snippetifyIframe'
-            }))
+        // Append frame to dom when there are code tags
+        if ($('pre > code, div.highlight > pre').length > 0) {
+            $('body').append($('<iframe>')
+                .addClass('snippetify-iframe hide').attr({
+                    scrolling: 'no',
+                    frameBorder: 0,
+                    id: 'snippetifyIframe',
+                    name: 'snippetifyIframe',
+                    src: SNIPPETIFY_NEW_SNIPPET_URL
+                }))
 
-        // Add frame listener
-        chrome.runtime.onMessage.addListener(e => {
-            if (e.target === CS_TARGET && e.type === CS_CLOSE_MODAL) this.closeIframe()
-        })
+            // Get listen close event from iframe
+            window.addEventListener('message', e => {
+                if (e.data && e.data.type === 'NEW_SNIPPET' && e.data.action === 'close') this.closeIframe()
+            })
+        }
     }
 
     /**
@@ -178,10 +194,13 @@ class ContentScripts {
      * @returns void
      */
     openIframe (payload) {
-        chrome.runtime.sendMessage({ target: CS_MODAL_TARGET, type: CS_CLOSE_MODAL }, () => { // Close all opened modal
-            $('#snippetifyIframe').removeClass('hide')
-            chrome.runtime.sendMessage({ target: CS_MODAL_TARGET, type: CS_OPEN_MODAL, payload: payload }) // Open modal
-        })
+        $('#snippetifyIframe')
+            .stop()
+            .css('opacity', 0)
+            .removeClass('hide')
+            .animate({ opacity: 1 }, 90, 'linear', () => {
+                $('#snippetifyIframe')[0].contentWindow.postMessage({ type: 'NEW_SNIPPET', payload: payload }, '*')
+            })
     }
 
     /**
@@ -189,7 +208,9 @@ class ContentScripts {
      * @returns void
      */
     closeIframe () {
-        $('#snippetifyIframe').addClass('hide')
+        $('#snippetifyIframe').stop().animate({ opacity: 0 }, 100, () => {
+            $('#snippetifyIframe').addClass('hide')
+        })
     }
 }
 

@@ -31,7 +31,7 @@
             "http://*/*",
             "https://*/*"
         ],
-        "exclude_matches": ["https://snippetify.com/*"],
+        "exclude_globs": ["*snippetify.com*", "*localhost*"],
         "css": [
             "css/contentscripts.min.css"
         ],
@@ -57,11 +57,10 @@
         "contextMenus",
         "webNavigation",
         "*://*.google.com/",
-        "https://snippetify.com/",
-        "https://api.snippetify.com/"
+        "*://snippetify.com/",
+        "*://api.snippetify.com/"
     ],
     "web_accessible_resources": [
-        "img/*.png",
-        "page_modal.html"
+        "img/*.png"
     ]
 }
