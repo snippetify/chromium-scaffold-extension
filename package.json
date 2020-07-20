@@ -54,7 +54,7 @@
     "bootstrap": "^4.5.0",
     "codemirror": "^5.53.2",
     "jquery": "^3.5.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "popper.js": "^1.16.1",
     "simplebar": "^5.2.0",
     "simplemde": "^1.11.2",
